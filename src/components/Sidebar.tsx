@@ -20,7 +20,12 @@ const Sidebar = ({ activeView, setActiveView }: { activeView: string, setActiveV
         </div>
         <div className="sidebar-link cursor-pointer"><Users size={20} /> Routers</div>
         <div className="sidebar-link cursor-pointer"><Bell size={20} /> Alerts</div>
-        <div className="sidebar-link cursor-pointer"><BarChart2 size={20} /> Analytics</div>
+        <div 
+          onClick={() => setActiveView('analytics')}
+          className={`sidebar-link cursor-pointer ${activeView === 'analytics' ? 'active' : ''}`}
+        >
+          <BarChart2 size={20} /> Analytics
+        </div>
         <div 
           onClick={() => setActiveView('scheduling')}
           className={`sidebar-link cursor-pointer ${activeView === 'scheduling' ? 'active' : ''}`}

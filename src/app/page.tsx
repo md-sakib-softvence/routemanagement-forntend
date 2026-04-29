@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Sidebar from "@/components/Sidebar";
 import Dashboard from "@/components/Dashboard";
 import Scheduler from "@/components/Scheduler";
+import Analytics from "@/components/Analytics";
 import AlertOverlay from "@/components/AlertOverlay";
 
 export default function Home() {
@@ -12,7 +13,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[#0a0c10]">
       <Sidebar activeView={activeView} setActiveView={setActiveView} />
-      {activeView === 'overview' ? <Dashboard /> : <Scheduler />}
+      {activeView === 'overview' ? <Dashboard /> : activeView === 'analytics' ? <Analytics /> : <Scheduler />}
     </main>
   );
 }

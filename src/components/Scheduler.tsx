@@ -1,13 +1,19 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Clock, FileText, Sparkles, Trash2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { HourlyAnalysisChart } from './scheduler/HourlyAnalysisChart';
+import { ViewScheduleModal } from './scheduler/ViewScheduleModal';
+import { EditScheduleModal } from './scheduler/EditScheduleModal';
+import { CalendarGrid } from './scheduler/CalendarGrid';
 
 const Scheduler = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<any>(null);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewSchedule, setViewSchedule] = useState<any>(null);
   const [schedules, setSchedules] = useState<any[]>([]);
   const [isGeneratingMotivation, setIsGeneratingMotivation] = useState(false);
   const [formData, setFormData] = useState({
@@ -17,12 +23,8 @@ const Scheduler = () => {
     time: '12:00'
   });
 
-  const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
-  const firstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
-
   const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
   const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
-
   const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
   useEffect(() => {
@@ -50,12 +52,8 @@ const Scheduler = () => {
     e.stopPropagation();
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
-      const res = await fetch(`${apiUrl}/schedules/${id}`, {
-        method: 'DELETE',
-      });
-      if (res.ok) {
-        fetchSchedules();
-      }
+      const res = await fetch(`${apiUrl}/schedules/${id}`, { method: 'DELETE' });
+      if (res.ok) fetchSchedules();
     } catch (err) {
       console.error("Failed to delete schedule", err);
     }
@@ -63,6 +61,12 @@ const Scheduler = () => {
 
   const handleScheduleClick = (e: React.MouseEvent, schedule: any) => {
     e.stopPropagation();
+    setViewSchedule(schedule);
+    setShowViewModal(true);
+  };
+
+  const openEditModal = (schedule: any) => {
+    setShowViewModal(false);
     setEditingSchedule(schedule);
     const date = new Date(schedule.date);
     const time = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
@@ -87,21 +91,14 @@ const Scheduler = () => {
     try {
       const { time, ...dataToSend } = formData;
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
       const res = await fetch(editingSchedule ? `${apiUrl}/schedules/${editingSchedule.id}` : `${apiUrl}/schedules`, {
         method: editingSchedule ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...dataToSend,
-          date: fullDate.toISOString()
-        })
+        body: JSON.stringify({ ...dataToSend, date: fullDate.toISOString() })
       });
-
       if (res.ok) {
-        setShowModal(false);
-        setEditingSchedule(null);
+        closeModal();
         fetchSchedules();
-        setFormData({ title: '', description: '', motivationTitle: '', time: '12:00' });
       }
     } catch (err) {
       console.error("Failed to save schedule", err);
@@ -118,9 +115,7 @@ const Scheduler = () => {
       });
       if (res.ok) {
         fetchSchedules();
-        if (editingSchedule && editingSchedule.id === id) {
-          closeModal();
-        }
+        if (editingSchedule && editingSchedule.id === id) closeModal();
       }
     } catch (err) {
       console.error("Failed to update status", err);
@@ -145,7 +140,6 @@ const Scheduler = () => {
         const newDate = new Date(date);
         const originalDate = new Date(originalSchedule.date);
         newDate.setHours(originalDate.getHours(), originalDate.getMinutes());
-
         return fetch(`${apiUrl}/schedules`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -163,67 +157,10 @@ const Scheduler = () => {
     }
   };
 
-  const renderCalendar = () => {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    const daysCount = daysInMonth(year, month);
-    const firstDay = firstDayOfMonth(year, month);
-    const days = [];
-
-    for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`empty-${i}`} className="h-32 border border-white/5 opacity-50"></div>);
-    }
-
-    for (let d = 1; d <= daysCount; d++) {
-      const dayDate = new Date(year, month, d);
-      const isToday = new Date().toDateString() === dayDate.toDateString();
-      const daySchedules = schedules.filter(s => new Date(s.date).toDateString() === dayDate.toDateString());
-
-      days.push(
-        <div
-          key={d}
-          onClick={() => { setSelectedDate(dayDate); setShowModal(true); }}
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => handleDrop(e, dayDate)}
-          draggable={daySchedules.length > 0}
-          onDragStart={(e) => handleDragStart(e, daySchedules)}
-          className={`h-32 border border-white/5 p-2 cursor-pointer hover:bg-white/10 transition-all relative group ${isToday ? 'bg-primary/10' : ''} ${daySchedules.length > 0 ? 'cursor-grab active:cursor-grabbing border-primary/20' : ''}`}
-        >
-          <div className="flex justify-between items-center mb-1">
-            <span className={`text-sm font-bold ${isToday ? 'text-primary' : 'text-gray-500'}`}>{d}</span>
-            {daySchedules.length > 0 && <span className="text-[10px] text-gray-400 bg-white/5 px-1 rounded">ALL</span>}
-          </div>
-          <div className="mt-1 space-y-1 overflow-y-auto max-h-[85px] no-scrollbar">
-            {daySchedules.map((s, idx) => (
-              <div
-                key={s.id || idx}
-                onClick={(e) => handleScheduleClick(e, s)}
-                className={`text-[10px] px-1.5 py-0.5 rounded truncate border transition-colors flex justify-between items-center group/item hover:bg-opacity-30 ${s.callStatus === 'CALLING' ? 'bg-red-500/20 text-red-500 border-red-500/10 animate-pulse' :
-                  s.callStatus === 'RECEIVED' ? 'bg-green-500/20 text-green-500 border-green-500/10' :
-                    s.callStatus === 'CANCELLED' ? 'bg-gray-500/20 text-gray-500 border-gray-500/10' :
-                      s.callStatus === 'STOPPED' ? 'bg-yellow-500/20 text-yellow-500 border-yellow-500/10' :
-                        'bg-primary/20 text-primary border-primary/10'
-                  }`}
-              >
-                <span className="truncate flex items-center gap-1">
-                  {s.callStatus === 'CALLING' && <Clock size={8} />}
-                  {s.title}
-                </span>
-                <button
-                  onClick={(e) => handleDelete(e, s.id)}
-                  className="opacity-0 group-hover/item:opacity-100 hover:text-red-500 transition-all ml-1 p-0.5"
-                >
-                  <X size={10} />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    return days;
-  };
+  const todayStr = new Date().toDateString();
+  const todaySchedules = schedules.filter(s => new Date(s.date).toDateString() === todayStr);
+  const todayReceived = todaySchedules.filter(s => s.callStatus === 'RECEIVED').length;
+  const todayFailed = todaySchedules.filter(s => s.callStatus === 'CANCELLED' || s.callStatus === 'STOPPED').length;
 
   return (
     <div className="ml-64 p-8 min-h-screen">
@@ -239,181 +176,56 @@ const Scheduler = () => {
         </div>
       </header>
 
-      <div className="grid grid-cols-7 gap-0 border border-white/5 rounded-2xl overflow-hidden glass">
-        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
-          <div key={d} className="bg-white/5 py-3 text-center text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-white/5">
-            {d}
-          </div>
-        ))}
-        {renderCalendar()}
+      <CalendarGrid 
+        currentDate={currentDate} 
+        schedules={schedules} 
+        setSelectedDate={setSelectedDate} 
+        setShowModal={setShowModal} 
+        handleDrop={handleDrop} 
+        handleDragStart={handleDragStart} 
+        handleScheduleClick={handleScheduleClick} 
+        handleDelete={handleDelete} 
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
+        <div className="metric-card">
+          <span className="metric-label">Today Total Schedules</span>
+          <span className="metric-value text-primary">{todaySchedules.length}</span>
+        </div>
+        <div className="metric-card">
+          <span className="metric-label">Today Completed</span>
+          <span className="metric-value text-green-400">{todayReceived}</span>
+        </div>
+        <div className="metric-card">
+          <span className="metric-label">Today Uncompleted</span>
+          <span className="metric-value text-red-500">{todayFailed}</span>
+        </div>
       </div>
 
-      {(() => {
-        const todayStr = new Date().toDateString();
-        const todaySchedules = schedules.filter(s => new Date(s.date).toDateString() === todayStr);
-        const todayReceived = todaySchedules.filter(s => s.callStatus === 'RECEIVED').length;
-        const todayFailed = todaySchedules.filter(s => s.callStatus === 'CANCELLED' || s.callStatus === 'STOPPED').length;
-
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
-            <div className="metric-card">
-              <span className="metric-label">Today Total Schedules</span>
-              <span className="metric-value text-primary">{todaySchedules.length}</span>
-            </div>
-            <div className="metric-card">
-              <span className="metric-label">Today Received</span>
-              <span className="metric-value text-green-400">{todayReceived}</span>
-            </div>
-            <div className="metric-card">
-              <span className="metric-label">Today Failed (Stopped/Cancelled)</span>
-              <span className="metric-value text-red-500">{todayFailed}</span>
-            </div>
-          </div>
-        );
-      })()}
+      <HourlyAnalysisChart schedules={schedules} />
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass w-full max-w-md rounded-2xl p-8 border border-white/10 shadow-2xl relative">
-            <button
-              onClick={closeModal}
-              className="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors"
-            >
-              <X size={20} />
-            </button>
-            <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-              {editingSchedule ? <FileText className="text-primary" /> : <Plus className="text-primary" />}
-              {editingSchedule ? 'Schedule Details' : `New Schedule for ${selectedDate?.toLocaleDateString()}`}
-            </h3>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Schedule Title</label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-primary"
-                  placeholder="e.g. Core Update"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Time</label>
-                  <div className="relative">
-                    <Clock size={16} className="absolute left-3 top-3 text-gray-500" />
-                    <input
-                      type="time"
-                      value={formData.time}
-                      onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2 outline-none focus:border-primary"
-                      required
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Motivation</label>
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        if (!formData.title) return;
-                        setIsGeneratingMotivation(true);
-                        try {
-                          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
-                          const res = await fetch(`${apiUrl}/schedules/generate-motivation`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              title: formData.title,
-                              description: formData.description,
-                              motivationTitle: formData.motivationTitle
-                            })
-                          });
-                          const data = await res.json();
-                          if (data.motivation) {
-                            setFormData(prev => ({ ...prev, motivationTitle: data.motivation }));
-                          }
-                        } finally {
-                          setIsGeneratingMotivation(false);
-                        }
-                      }}
-                      disabled={isGeneratingMotivation || !formData.title}
-                      title="Generate Motivation via AI"
-                      className="absolute left-1.5 top-1.5 p-1.5 hover:bg-white/10 rounded-full transition-colors disabled:opacity-50 z-10"
-                    >
-                      <Sparkles size={16} className={`text-accent ${isGeneratingMotivation ? 'animate-pulse text-white' : ''}`} />
-                    </button>
-                    <input
-                      type="text"
-                      value={formData.motivationTitle}
-                      onChange={(e) => setFormData({ ...formData, motivationTitle: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2 outline-none focus:border-accent"
-                      placeholder="Goal..."
-                      disabled={isGeneratingMotivation}
-                    />
-                  </div>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Description</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-primary h-24 resize-none"
-                  placeholder="Details..."
-                />
-              </div>
-              {editingSchedule && (
-                <div className="bg-white/5 p-4 rounded-xl border border-white/10 space-y-3">
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Call Controls</p>
-                  <div className="grid grid-cols-3 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => handleStatusUpdate(editingSchedule.id, 'RECEIVED')}
-                      className={`py-2 rounded-lg text-sm font-bold transition-all ${editingSchedule.callStatus === 'RECEIVED' ? 'bg-green-500 text-white' : 'bg-green-500/10 text-green-500 hover:bg-green-500/20'}`}
-                    >
-                      Receive
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleStatusUpdate(editingSchedule.id, 'CANCELLED')}
-                      className={`py-2 rounded-lg text-sm font-bold transition-all ${editingSchedule.callStatus === 'CANCELLED' ? 'bg-red-500 text-white' : 'bg-red-500/10 text-red-500 hover:bg-red-500/20'}`}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleStatusUpdate(editingSchedule.id, 'STOPPED')}
-                      className={`py-2 rounded-lg text-sm font-bold transition-all ${editingSchedule.callStatus === 'STOPPED' ? 'bg-yellow-500 text-white' : 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20'}`}
-                    >
-                      Stop
-                    </button>
-                  </div>
-                  {editingSchedule.callStatus === 'CALLING' && (
-                    <p className="text-[10px] text-red-400 animate-pulse text-center">Currently Calling on Telegram (Attempt ${editingSchedule.callAttempt})...</p>
-                  )}
-                </div>
-              )}
+        <EditScheduleModal 
+          editingSchedule={editingSchedule}
+          selectedDate={selectedDate}
+          formData={formData}
+          setFormData={setFormData}
+          handleSubmit={handleSubmit}
+          closeModal={closeModal}
+          isGeneratingMotivation={isGeneratingMotivation}
+          setIsGeneratingMotivation={setIsGeneratingMotivation}
+          handleStatusUpdate={handleStatusUpdate}
+        />
+      )}
 
-              <div className="flex gap-4 pt-4">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="flex-1 bg-white/5 hover:bg-white/10 py-3 rounded-lg transition-colors border border-white/10 font-medium"
-                >
-                  Close
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 bg-primary hover:bg-primary/80 py-3 rounded-lg transition-colors text-white font-medium shadow-lg shadow-primary/20"
-                >
-                  {editingSchedule ? 'Update Details' : 'Save Schedule'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {showViewModal && viewSchedule && (
+        <ViewScheduleModal 
+          viewSchedule={viewSchedule}
+          setShowViewModal={setShowViewModal}
+          setViewSchedule={setViewSchedule}
+          handleStatusUpdate={handleStatusUpdate}
+          openEditModal={openEditModal}
+        />
       )}
     </div>
   );
