@@ -9,6 +9,7 @@ const Scheduler = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<any>(null);
   const [schedules, setSchedules] = useState<any[]>([]);
+  const [isGeneratingMotivation, setIsGeneratingMotivation] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -197,13 +198,12 @@ const Scheduler = () => {
               <div
                 key={s.id || idx}
                 onClick={(e) => handleScheduleClick(e, s)}
-                className={`text-[10px] px-1.5 py-0.5 rounded truncate border transition-colors flex justify-between items-center group/item hover:bg-opacity-30 ${
-                  s.callStatus === 'CALLING' ? 'bg-red-500/20 text-red-500 border-red-500/10 animate-pulse' :
+                className={`text-[10px] px-1.5 py-0.5 rounded truncate border transition-colors flex justify-between items-center group/item hover:bg-opacity-30 ${s.callStatus === 'CALLING' ? 'bg-red-500/20 text-red-500 border-red-500/10 animate-pulse' :
                   s.callStatus === 'RECEIVED' ? 'bg-green-500/20 text-green-500 border-green-500/10' :
-                  s.callStatus === 'CANCELLED' ? 'bg-gray-500/20 text-gray-500 border-gray-500/10' :
-                  s.callStatus === 'STOPPED' ? 'bg-yellow-500/20 text-yellow-500 border-yellow-500/10' :
-                  'bg-primary/20 text-primary border-primary/10'
-                }`}
+                    s.callStatus === 'CANCELLED' ? 'bg-gray-500/20 text-gray-500 border-gray-500/10' :
+                      s.callStatus === 'STOPPED' ? 'bg-yellow-500/20 text-yellow-500 border-yellow-500/10' :
+                        'bg-primary/20 text-primary border-primary/10'
+                  }`}
               >
                 <span className="truncate flex items-center gap-1">
                   {s.callStatus === 'CALLING' && <Clock size={8} />}
@@ -248,20 +248,29 @@ const Scheduler = () => {
         {renderCalendar()}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
-        <div className="metric-card">
-          <span className="metric-label">Total Schedules</span>
-          <span className="metric-value text-primary">{schedules.length}</span>
-        </div>
-        <div className="metric-card">
-          <span className="metric-label">Planned Calls</span>
-          <span className="metric-value text-accent">{schedules.length > 0 ? (schedules.length * 1.5).toFixed(0) : 0}</span>
-        </div>
-        <div className="metric-card">
-          <span className="metric-label">Motivation Quota</span>
-          <span className="metric-value text-purple-400">Active</span>
-        </div>
-      </div>
+      {(() => {
+        const todayStr = new Date().toDateString();
+        const todaySchedules = schedules.filter(s => new Date(s.date).toDateString() === todayStr);
+        const todayReceived = todaySchedules.filter(s => s.callStatus === 'RECEIVED').length;
+        const todayFailed = todaySchedules.filter(s => s.callStatus === 'CANCELLED' || s.callStatus === 'STOPPED').length;
+
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
+            <div className="metric-card">
+              <span className="metric-label">Today Total Schedules</span>
+              <span className="metric-value text-primary">{todaySchedules.length}</span>
+            </div>
+            <div className="metric-card">
+              <span className="metric-label">Today Received</span>
+              <span className="metric-value text-green-400">{todayReceived}</span>
+            </div>
+            <div className="metric-card">
+              <span className="metric-label">Today Failed (Stopped/Cancelled)</span>
+              <span className="metric-value text-red-500">{todayFailed}</span>
+            </div>
+          </div>
+        );
+      })()}
 
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -305,13 +314,43 @@ const Scheduler = () => {
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Motivation</label>
                   <div className="relative">
-                    <Sparkles size={16} className="absolute left-3 top-3 text-accent" />
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!formData.title) return;
+                        setIsGeneratingMotivation(true);
+                        try {
+                          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+                          const res = await fetch(`${apiUrl}/schedules/generate-motivation`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              title: formData.title,
+                              description: formData.description,
+                              motivationTitle: formData.motivationTitle
+                            })
+                          });
+                          const data = await res.json();
+                          if (data.motivation) {
+                            setFormData(prev => ({ ...prev, motivationTitle: data.motivation }));
+                          }
+                        } finally {
+                          setIsGeneratingMotivation(false);
+                        }
+                      }}
+                      disabled={isGeneratingMotivation || !formData.title}
+                      title="Generate Motivation via AI"
+                      className="absolute left-1.5 top-1.5 p-1.5 hover:bg-white/10 rounded-full transition-colors disabled:opacity-50 z-10"
+                    >
+                      <Sparkles size={16} className={`text-accent ${isGeneratingMotivation ? 'animate-pulse text-white' : ''}`} />
+                    </button>
                     <input
                       type="text"
                       value={formData.motivationTitle}
                       onChange={(e) => setFormData({ ...formData, motivationTitle: e.target.value })}
                       className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2 outline-none focus:border-accent"
                       placeholder="Goal..."
+                      disabled={isGeneratingMotivation}
                     />
                   </div>
                 </div>
@@ -329,21 +368,21 @@ const Scheduler = () => {
                 <div className="bg-white/5 p-4 rounded-xl border border-white/10 space-y-3">
                   <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Call Controls</p>
                   <div className="grid grid-cols-3 gap-3">
-                    <button 
+                    <button
                       type="button"
                       onClick={() => handleStatusUpdate(editingSchedule.id, 'RECEIVED')}
                       className={`py-2 rounded-lg text-sm font-bold transition-all ${editingSchedule.callStatus === 'RECEIVED' ? 'bg-green-500 text-white' : 'bg-green-500/10 text-green-500 hover:bg-green-500/20'}`}
                     >
                       Receive
                     </button>
-                    <button 
+                    <button
                       type="button"
                       onClick={() => handleStatusUpdate(editingSchedule.id, 'CANCELLED')}
                       className={`py-2 rounded-lg text-sm font-bold transition-all ${editingSchedule.callStatus === 'CANCELLED' ? 'bg-red-500 text-white' : 'bg-red-500/10 text-red-500 hover:bg-red-500/20'}`}
                     >
                       Cancel
                     </button>
-                    <button 
+                    <button
                       type="button"
                       onClick={() => handleStatusUpdate(editingSchedule.id, 'STOPPED')}
                       className={`py-2 rounded-lg text-sm font-bold transition-all ${editingSchedule.callStatus === 'STOPPED' ? 'bg-yellow-500 text-white' : 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20'}`}
@@ -358,15 +397,15 @@ const Scheduler = () => {
               )}
 
               <div className="flex gap-4 pt-4">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={closeModal}
                   className="flex-1 bg-white/5 hover:bg-white/10 py-3 rounded-lg transition-colors border border-white/10 font-medium"
                 >
                   Close
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="flex-1 bg-primary hover:bg-primary/80 py-3 rounded-lg transition-colors text-white font-medium shadow-lg shadow-primary/20"
                 >
                   {editingSchedule ? 'Update Details' : 'Save Schedule'}

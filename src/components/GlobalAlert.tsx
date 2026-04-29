@@ -50,7 +50,7 @@ const GlobalAlert = () => {
             <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-red-500/30 bg-[#0f1115] p-10 shadow-[0_0_50px_rgba(239,68,68,0.2)]">
                 {/* Background Glow */}
                 <div className="absolute -top-24 -left-24 h-48 w-48 rounded-full bg-red-500/10 blur-3xl"></div>
-                
+
                 <div className="relative flex flex-col items-center text-center">
                     <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-full bg-red-500/10 border border-red-500/20 shadow-[0_0_20px_rgba(239,68,68,0.1)]">
                         <Bell className="h-10 w-10 text-red-500 animate-bounce" />
@@ -59,12 +59,12 @@ const GlobalAlert = () => {
                     <h2 className="mb-4 text-4xl font-black tracking-tight text-white uppercase">
                         CRITICAL ALERT
                     </h2>
-                    
+
                     <p className="mb-2 text-lg text-gray-400">
-                        High BGP Latency detected on <b>{activeAlert.title}</b>
+                        <b>{activeAlert.title}</b>
                     </p>
                     <p className="mb-10 text-sm text-gray-500">
-                        This alert is repeating on both Telegram and Dashboard.
+                        {activeAlert.motivationTitle || "This alert needs your attention on the dashboard."}
                     </p>
 
                     <button

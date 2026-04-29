@@ -13,7 +13,6 @@ export default function Home() {
     <main className="min-h-screen bg-[#0a0c10]">
       <Sidebar activeView={activeView} setActiveView={setActiveView} />
       {activeView === 'overview' ? <Dashboard /> : <Scheduler />}
-      <AlertOverlay />
     </main>
   );
 }
