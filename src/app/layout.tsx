@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import GlobalAlert from "@/components/GlobalAlert";
 
 export const metadata: Metadata = {
   title: "Routing Management Dashboard",
@@ -14,6 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
+        <GlobalAlert />
         {children}
       </body>
     </html>
