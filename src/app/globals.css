@@ -1,6 +1,14 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #6366f1;
+  --color-secondary: #a855f7;
+  --color-accent: #22d3ee;
+  --color-background: #0a0c10;
+  --color-foreground: #f0f2f5;
+  --color-sidebar-bg: #11141b;
+  --color-card-bg: rgba(25, 29, 36, 0.7);
+}
 
 :root {
   --background: #0a0c10;
@@ -31,15 +39,21 @@ body {
 }
 
 .sidebar-link:hover {
-  @apply bg-white/10;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .sidebar-link.active {
-  @apply bg-primary/20 text-primary border-l-4 border-primary;
+  background: rgba(99, 102, 241, 0.2);
+  color: #6366f1;
+  border-left: 4px solid #6366f1;
 }
 
 .metric-card {
-  @apply p-6 rounded-2xl glass flex flex-col gap-2;
+  @apply p-6 rounded-2xl flex flex-col gap-2;
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .metric-value {

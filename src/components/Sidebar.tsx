@@ -1,9 +1,9 @@
 "use client";
 
 import React from 'react';
-import { Home, Settings, Bell, BarChart2, Users, LogOut } from 'lucide-react';
+import { Home, Settings, Bell, BarChart2, Users, LogOut, Calendar } from 'lucide-react';
 
-const Sidebar = () => {
+const Sidebar = ({ activeView, setActiveView }: { activeView: string, setActiveView: (v: string) => void }) => {
   return (
     <div className="w-64 h-screen bg-[#11141b] border-r border-white/5 flex flex-col p-4 fixed left-0 top-0">
       <div className="flex items-center gap-3 px-4 py-6 mb-8">
@@ -12,10 +12,21 @@ const Sidebar = () => {
       </div>
 
       <nav className="flex-1 space-y-2">
-        <div className="sidebar-link active cursor-pointer"><Home size={20} /> Overview</div>
+        <div 
+          onClick={() => setActiveView('overview')}
+          className={`sidebar-link cursor-pointer ${activeView === 'overview' ? 'active' : ''}`}
+        >
+          <Home size={20} /> Overview
+        </div>
         <div className="sidebar-link cursor-pointer"><Users size={20} /> Routers</div>
         <div className="sidebar-link cursor-pointer"><Bell size={20} /> Alerts</div>
         <div className="sidebar-link cursor-pointer"><BarChart2 size={20} /> Analytics</div>
+        <div 
+          onClick={() => setActiveView('scheduling')}
+          className={`sidebar-link cursor-pointer ${activeView === 'scheduling' ? 'active' : ''}`}
+        >
+          <Calendar size={20} /> Scheduling
+        </div>
       </nav>
 
       <div className="mt-auto space-y-2">
