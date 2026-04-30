@@ -61,12 +61,14 @@ export const CalendarGrid = ({
                   {s.callStatus === 'CALLING' && <Clock size={8} />}
                   {s.title}
                 </span>
-                <button
-                  onClick={(e) => handleDelete(e, s.id)}
-                  className="opacity-0 group-hover/item:opacity-100 hover:text-red-500 transition-all ml-1 p-0.5"
-                >
-                  <X size={10} />
-                </button>
+                {new Date(s.date) >= new Date(new Date().setHours(0, 0, 0, 0)) && (
+                  <button
+                    onClick={(e) => handleDelete(e, s.id)}
+                    className="opacity-0 group-hover/item:opacity-100 hover:text-red-500 transition-all ml-1 p-0.5"
+                  >
+                    <X size={10} />
+                  </button>
+                )}
               </div>
             ))}
           </div>

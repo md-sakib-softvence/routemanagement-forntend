@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, X, Sparkles, FileText } from 'lucide-react';
+import { Clock, X, Sparkles, FileText, AlertCircle } from 'lucide-react';
 
 export const ViewScheduleModal = ({ 
   viewSchedule, 
@@ -65,40 +65,52 @@ export const ViewScheduleModal = ({
           </div>
         )}
 
-        <div className="mt-auto pt-8 border-t border-white/10 space-y-6">
-          <div>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Call Controls</p>
-            <div className="grid grid-cols-3 gap-4">
+        {new Date(viewSchedule.date) >= new Date(new Date().setHours(0, 0, 0, 0)) && (
+          <div className="mt-auto pt-8 border-t border-white/10 space-y-6">
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Call Controls</p>
+              <div className="grid grid-cols-3 gap-4">
+                <button
+                  onClick={() => { handleStatusUpdate(viewSchedule.id, 'RECEIVED'); setShowViewModal(false); }}
+                  className={`py-3 rounded-xl text-sm font-bold transition-all ${viewSchedule.callStatus === 'RECEIVED' ? 'bg-green-500 text-white shadow-lg shadow-green-500/30' : 'bg-green-500/10 text-green-500 hover:bg-green-500/20 border border-green-500/20'}`}
+                >
+                  Receive
+                </button>
+                <button
+                  onClick={() => { handleStatusUpdate(viewSchedule.id, 'CANCELLED'); setShowViewModal(false); }}
+                  className={`py-3 rounded-xl text-sm font-bold transition-all ${viewSchedule.callStatus === 'CANCELLED' ? 'bg-red-500 text-white shadow-lg shadow-red-500/30' : 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20'}`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => { handleStatusUpdate(viewSchedule.id, 'STOPPED'); setShowViewModal(false); }}
+                  className={`py-3 rounded-xl text-sm font-bold transition-all ${viewSchedule.callStatus === 'STOPPED' ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-500/30' : 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 border border-yellow-500/20'}`}
+                >
+                  Stop
+                </button>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
               <button
-                onClick={() => { handleStatusUpdate(viewSchedule.id, 'RECEIVED'); setShowViewModal(false); }}
-                className={`py-3 rounded-xl text-sm font-bold transition-all ${viewSchedule.callStatus === 'RECEIVED' ? 'bg-green-500 text-white shadow-lg shadow-green-500/30' : 'bg-green-500/10 text-green-500 hover:bg-green-500/20 border border-green-500/20'}`}
+                onClick={() => openEditModal(viewSchedule)}
+                className="flex-1 bg-primary/20 hover:bg-primary/40 py-4 rounded-xl transition-all border border-primary/30 font-bold text-white flex items-center justify-center gap-2"
               >
-                Receive
-              </button>
-              <button
-                onClick={() => { handleStatusUpdate(viewSchedule.id, 'CANCELLED'); setShowViewModal(false); }}
-                className={`py-3 rounded-xl text-sm font-bold transition-all ${viewSchedule.callStatus === 'CANCELLED' ? 'bg-red-500 text-white shadow-lg shadow-red-500/30' : 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20'}`}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => { handleStatusUpdate(viewSchedule.id, 'STOPPED'); setShowViewModal(false); }}
-                className={`py-3 rounded-xl text-sm font-bold transition-all ${viewSchedule.callStatus === 'STOPPED' ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-500/30' : 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 border border-yellow-500/20'}`}
-              >
-                Stop
+                <FileText size={18} /> Edit Schedule Details
               </button>
             </div>
           </div>
-
-          <div className="flex gap-4">
-            <button
-              onClick={() => openEditModal(viewSchedule)}
-              className="flex-1 bg-primary/20 hover:bg-primary/40 py-4 rounded-xl transition-all border border-primary/30 font-bold text-white flex items-center justify-center gap-2"
-            >
-              <FileText size={18} /> Edit Schedule Details
-            </button>
+        )}
+        {new Date(viewSchedule.date) < new Date(new Date().setHours(0, 0, 0, 0)) && (
+          <div className="mt-auto pt-8 border-t border-white/10">
+            <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center gap-3">
+              <AlertCircle size={20} className="text-gray-500" />
+              <p className="text-gray-500 text-sm font-medium italic">
+                This schedule has passed and is locked for historical auditing.
+              </p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

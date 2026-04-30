@@ -176,15 +176,15 @@ const Scheduler = () => {
         </div>
       </header>
 
-      <CalendarGrid 
-        currentDate={currentDate} 
-        schedules={schedules} 
-        setSelectedDate={setSelectedDate} 
-        setShowModal={setShowModal} 
-        handleDrop={handleDrop} 
-        handleDragStart={handleDragStart} 
-        handleScheduleClick={handleScheduleClick} 
-        handleDelete={handleDelete} 
+      <CalendarGrid
+        currentDate={currentDate}
+        schedules={schedules}
+        setSelectedDate={setSelectedDate}
+        setShowModal={setShowModal}
+        handleDrop={handleDrop}
+        handleDragStart={handleDragStart}
+        handleScheduleClick={handleScheduleClick}
+        handleDelete={handleDelete}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
@@ -202,10 +202,10 @@ const Scheduler = () => {
         </div>
       </div>
 
-      <HourlyAnalysisChart schedules={schedules} />
+      <HourlyAnalysisChart schedules={todaySchedules} />
 
       {showModal && (
-        <EditScheduleModal 
+        <EditScheduleModal
           editingSchedule={editingSchedule}
           selectedDate={selectedDate}
           formData={formData}
@@ -219,7 +219,7 @@ const Scheduler = () => {
       )}
 
       {showViewModal && viewSchedule && (
-        <ViewScheduleModal 
+        <ViewScheduleModal
           viewSchedule={viewSchedule}
           setShowViewModal={setShowViewModal}
           setViewSchedule={setViewSchedule}

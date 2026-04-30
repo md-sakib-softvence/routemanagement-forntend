@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Home, Settings, Bell, BarChart2, Users, LogOut, Calendar } from 'lucide-react';
+import { Home, Settings, Bell, BarChart2, Users, LogOut, Calendar, Activity } from 'lucide-react';
 
 const Sidebar = ({ activeView, setActiveView }: { activeView: string, setActiveView: (v: string) => void }) => {
   return (
@@ -12,25 +12,38 @@ const Sidebar = ({ activeView, setActiveView }: { activeView: string, setActiveV
       </div>
 
       <nav className="flex-1 space-y-2">
-        <div 
+        <div
           onClick={() => setActiveView('overview')}
           className={`sidebar-link cursor-pointer ${activeView === 'overview' ? 'active' : ''}`}
         >
           <Home size={20} /> Overview
         </div>
-        <div className="sidebar-link cursor-pointer"><Users size={20} /> Routers</div>
-        <div className="sidebar-link cursor-pointer"><Bell size={20} /> Alerts</div>
-        <div 
+
+        <div
+          onClick={() => setActiveView('scheduling')}
+          className={`sidebar-link cursor-pointer ${activeView === 'scheduling' ? 'active' : ''}`}
+        >
+          <Calendar size={20} /> Scheduling
+        </div>
+
+        <div
           onClick={() => setActiveView('analytics')}
           className={`sidebar-link cursor-pointer ${activeView === 'analytics' ? 'active' : ''}`}
         >
           <BarChart2 size={20} /> Analytics
         </div>
-        <div 
-          onClick={() => setActiveView('scheduling')}
-          className={`sidebar-link cursor-pointer ${activeView === 'scheduling' ? 'active' : ''}`}
+
+        <div
+          onClick={() => setActiveView('reports')}
+          className={`sidebar-link cursor-pointer ${activeView === 'reports' ? 'active' : ''}`}
         >
-          <Calendar size={20} /> Scheduling
+          <BarChart2 size={20} /> your Report
+        </div>
+        <div
+          onClick={() => setActiveView('todayReport')}
+          className={`sidebar-link cursor-pointer ${activeView === 'todayReport' ? 'active' : ''}`}
+        >
+          <Activity size={20} /> Today Report
         </div>
       </nav>
 
